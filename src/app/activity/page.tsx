@@ -4,43 +4,36 @@ import { useEffect, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Activity as ActivityIcon, Zap, Users, CheckCircle, Clock, AlertCircle } from "lucide-react";
-import { api, WorkflowResult } from "@/lib/api";
+import { Activity as ActivityIcon, Zap, Users, CheckCircle, Clock, AlertCircle, LogIn, Calendar } from "lucide-react";
+import { api } from "@/lib/api";
 
 interface ActivityItem {
     id: string;
-    type: 'workflow' | 'sync' | 'classification';
+    type: string;
     title: string;
     description: string;
-    status: 'success' | 'pending' | 'error';
-    timestamp: Date;
+    status: string;
+    timestamp: string;
+    user_id?: string;
 }
 
-// Mock activity data (in real app, this would come from API)
-const mockActivities: ActivityItem[] = [
-    { id: '1', type: 'workflow', title: 'Client Sync Workflow', description: 'Synced 10 clients from Mindbody', status: 'success', timestamp: new Date(Date.now() - 1000 * 60 * 5) },
-    { id: '2', type: 'classification', title: 'AI Classification', description: 'Classified 10 clients into segments', status: 'success', timestamp: new Date(Date.now() - 1000 * 60 * 10) },
-    { id: '3', type: 'sync', title: 'Mailchimp Sync', description: 'Updated 3 VIP tags', status: 'success', timestamp: new Date(Date.now() - 1000 * 60 * 15) },
-    { id: '4', type: 'workflow', title: 'Re-engagement Campaign', description: 'Sent to 2 lapsed clients', status: 'success', timestamp: new Date(Date.now() - 1000 * 60 * 30) },
-];
-
 export default function ActivityPage() {
-    const [activities] = useState<ActivityItem[]>(mockActivities);
-    const [workflowHistory, setWorkflowHistory] = useState<WorkflowResult[]>([]);
+    const [activities, setActivities] = useState<ActivityItem[]>([]);
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
-        api.getWorkflows().then(() => {
-            // In real app, would fetch workflow history
-            setLoading(false);
-        });
+        api.getActivity(50).then((data) => {
+            setActivities(data.activities || []);
+        }).finally(() => setLoading(false));
     }, []);
 
     const getIcon = (type: string) => {
         switch (type) {
             case 'workflow': return Zap;
             case 'sync': return Users;
-            case 'classification': return ActivityIcon;
+            case 'login': return LogIn;
+            case 'logout': return LogIn;
+            case 'schedule': return Calendar;
             default: return ActivityIcon;
         }
     };
@@ -54,9 +47,11 @@ export default function ActivityPage() {
         }
     };
 
-    const formatTime = (date: Date) => {
+    const formatTime = (timestamp: string) => {
+        const date = new Date(timestamp);
         const diff = Date.now() - date.getTime();
         const mins = Math.floor(diff / 60000);
+        if (mins < 1) return 'Just now';
         if (mins < 60) return `${mins}m ago`;
         const hours = Math.floor(mins / 60);
         if (hours < 24) return `${hours}h ago`;
@@ -67,10 +62,25 @@ export default function ActivityPage() {
         return (
             <div className="space-y-6">
                 <Skeleton className="h-8 w-48" />
+                <div className="grid grid-cols-4 gap-4">
+                    <Skeleton className="h-24" />
+                    <Skeleton className="h-24" />
+                    <Skeleton className="h-24" />
+                    <Skeleton className="h-24" />
+                </div>
                 <Skeleton className="h-96 w-full" />
             </div>
         );
     }
+
+    const todayCount = activities.filter(a => {
+        const date = new Date(a.timestamp);
+        const today = new Date();
+        return date.toDateString() === today.toDateString();
+    }).length;
+
+    const successCount = activities.filter(a => a.status === 'success').length;
+    const errorCount = activities.filter(a => a.status === 'error').length;
 
     return (
         <div className="space-y-6 animate-in fade-in duration-500">
@@ -84,33 +94,33 @@ export default function ActivityPage() {
             </div>
 
             {/* Stats */}
-            <div className="grid grid-cols-4 gap-4">
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
                 <Card className="bg-[#15151c] border-gray-800">
                     <CardContent className="pt-6">
                         <p className="text-xs text-gray-500 uppercase tracking-wide">Today</p>
-                        <p className="text-2xl font-bold mt-1">4</p>
+                        <p className="text-2xl font-bold mt-1">{todayCount}</p>
                         <p className="text-xs text-gray-500">activities</p>
                     </CardContent>
                 </Card>
                 <Card className="bg-[#15151c] border-gray-800">
                     <CardContent className="pt-6">
-                        <p className="text-xs text-gray-500 uppercase tracking-wide">Workflows</p>
-                        <p className="text-2xl font-bold mt-1">2</p>
-                        <p className="text-xs text-emerald-400">all successful</p>
+                        <p className="text-xs text-gray-500 uppercase tracking-wide">Total</p>
+                        <p className="text-2xl font-bold mt-1">{activities.length}</p>
+                        <p className="text-xs text-gray-500">logged</p>
                     </CardContent>
                 </Card>
                 <Card className="bg-[#15151c] border-gray-800">
                     <CardContent className="pt-6">
-                        <p className="text-xs text-gray-500 uppercase tracking-wide">Syncs</p>
-                        <p className="text-2xl font-bold mt-1">1</p>
-                        <p className="text-xs text-gray-500">Mailchimp</p>
+                        <p className="text-xs text-gray-500 uppercase tracking-wide">Successful</p>
+                        <p className="text-2xl font-bold mt-1 text-emerald-400">{successCount}</p>
+                        <p className="text-xs text-emerald-400">completed</p>
                     </CardContent>
                 </Card>
                 <Card className="bg-[#15151c] border-gray-800">
                     <CardContent className="pt-6">
                         <p className="text-xs text-gray-500 uppercase tracking-wide">Errors</p>
-                        <p className="text-2xl font-bold mt-1 text-emerald-400">0</p>
-                        <p className="text-xs text-emerald-400">all clear</p>
+                        <p className="text-2xl font-bold mt-1">{errorCount}</p>
+                        <p className="text-xs text-gray-500">{errorCount === 0 ? 'all clear' : 'need attention'}</p>
                     </CardContent>
                 </Card>
             </div>
@@ -125,6 +135,7 @@ export default function ActivityPage() {
                         <div className="text-center py-12">
                             <ActivityIcon className="w-12 h-12 text-gray-600 mx-auto mb-4" />
                             <p className="text-gray-500">No recent activity</p>
+                            <p className="text-xs text-gray-600 mt-1">Activities will appear here as you use the system</p>
                         </div>
                     ) : (
                         activities.map((activity) => {

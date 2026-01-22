@@ -85,4 +85,30 @@ export const api = {
         });
         return res.json();
     },
+
+    // Activity Log
+    getActivity: async (limit = 50) => {
+        const res = await fetch(`${API_URL}/activity?limit=${limit}`);
+        return res.json();
+    },
+
+    // Workflow Scheduling
+    scheduleWorkflow: async (workflowId: string, scheduleTime: string, repeat?: string) => {
+        const token = typeof window !== 'undefined' ? localStorage.getItem('clinicos_token') : null;
+        const res = await fetch(`${API_URL}/workflows/${workflowId}/schedule`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                ...(token && { 'Authorization': `Bearer ${token}` })
+            },
+            body: JSON.stringify({ workflow_id: workflowId, schedule_time: scheduleTime, repeat }),
+        });
+        return res.json();
+    },
+
+    getScheduledWorkflows: async () => {
+        const res = await fetch(`${API_URL}/workflows/scheduled`);
+        return res.json();
+    },
 };
+
