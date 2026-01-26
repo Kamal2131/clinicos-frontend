@@ -1,5 +1,5 @@
 // API client for ClinicOS backend
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://13.234.111.188';
 
 export interface Client {
     id: string;

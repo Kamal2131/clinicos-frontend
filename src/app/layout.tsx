@@ -25,11 +25,11 @@ function DashboardLayout({ children }: { children: React.ReactNode }) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
   return (
-    <div className="flex min-h-screen">
+    <div className="flex min-h-screen text-slate-100">
       {/* Mobile Menu Button */}
       <button
         onClick={() => setSidebarOpen(!sidebarOpen)}
-        className="lg:hidden fixed top-4 left-4 z-50 p-2 bg-[#1c1c26] rounded-lg"
+        className="lg:hidden fixed top-4 left-4 z-50 p-2 glass-panel rounded-lg text-slate-200"
       >
         {sidebarOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
       </button>
@@ -37,7 +37,7 @@ function DashboardLayout({ children }: { children: React.ReactNode }) {
       {/* Sidebar Overlay */}
       {sidebarOpen && (
         <div
-          className="lg:hidden fixed inset-0 bg-black/50 z-40"
+          className="lg:hidden fixed inset-0 bg-black/60 backdrop-blur-sm z-40"
           onClick={() => setSidebarOpen(false)}
         />
       )}
@@ -45,18 +45,18 @@ function DashboardLayout({ children }: { children: React.ReactNode }) {
       {/* Sidebar */}
       <aside className={`
         fixed lg:static inset-y-0 left-0 z-40
-        w-60 bg-[#111116] border-r border-gray-800/50 py-6 px-4 flex flex-col
-        transform transition-transform duration-200
+        w-64 glass-panel border-r-0 border-r-white/5 py-8 px-4 flex flex-col
+        transform transition-transform duration-300 ease-in-out
         ${sidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}
       `}>
-        <div className="mb-10 pl-3">
-          <h1 className="text-xl font-semibold tracking-tight">
-            Clinic<span className="text-purple-400">OS</span>
+        <div className="mb-12 pl-4">
+          <h1 className="text-2xl font-bold tracking-tight bg-gradient-to-r from-blue-400 to-indigo-400 bg-clip-text text-transparent">
+            ClinicOS
           </h1>
-          <p className="text-[11px] text-gray-500 mt-0.5 tracking-wide">Admin Dashboard</p>
+          <p className="text-[10px] text-slate-400 font-medium tracking-widest uppercase mt-1">Intelligence Layer</p>
         </div>
 
-        <nav className="flex-1 space-y-1">
+        <nav className="flex-1 space-y-1.5">
           {navItems.map((item) => {
             const isActive = pathname === item.href;
             const Icon = item.icon;
@@ -65,42 +65,45 @@ function DashboardLayout({ children }: { children: React.ReactNode }) {
                 key={item.href}
                 href={item.href}
                 onClick={() => setSidebarOpen(false)}
-                className={`flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-200 group
+                className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-200 group relative overflow-hidden
                   ${isActive
-                    ? 'bg-gradient-to-r from-purple-500/15 to-transparent border-l-2 border-purple-500 text-white'
-                    : 'hover:bg-gray-800/50 text-gray-400 hover:text-white'}
+                    ? 'text-white bg-white/10 shadow-lg shadow-blue-500/10'
+                    : 'text-slate-400 hover:text-white hover:bg-white/5'}
                 `}
               >
-                <Icon className={`w-4 h-4 ${isActive ? 'text-purple-400' : 'opacity-70 group-hover:opacity-100'}`} />
-                <span className="text-sm">{item.label}</span>
+                {isActive && (
+                  <div className="absolute left-0 top-0 bottom-0 w-1 bg-blue-500 rounded-r-full" />
+                )}
+                <Icon className={`w-5 h-5 ${isActive ? 'text-blue-400' : 'group-hover:text-blue-300 transition-colors'}`} />
+                <span className="text-sm font-medium">{item.label}</span>
               </Link>
             );
           })}
         </nav>
 
-        <div className="pt-4 border-t border-gray-800/50 space-y-3">
+        <div className="pt-6 border-t border-white/5">
           {user && (
-            <div className="flex items-center gap-2.5 px-3 py-2">
-              <div className="w-7 h-7 rounded-md bg-purple-500/20 flex items-center justify-center text-purple-400 text-xs font-medium">
+            <div className="flex items-center gap-3 px-3 py-3 mb-2 rounded-xl bg-white/5 border border-white/5">
+              <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-blue-500 to-indigo-600 flex items-center justify-center text-white text-xs font-bold shadow-lg shadow-indigo-500/20">
                 {user.name.charAt(0)}
               </div>
-              <div>
-                <p className="text-xs font-medium">{user.name}</p>
-                <p className="text-[10px] text-gray-500">{user.role}</p>
+              <div className="overflow-hidden">
+                <p className="text-sm font-medium truncate">{user.name}</p>
+                <p className="text-[10px] text-slate-400 truncate">{user.role}</p>
               </div>
             </div>
           )}
           <button
             onClick={logout}
-            className="flex items-center gap-2 w-full px-3 py-2 text-sm text-gray-400 hover:text-red-400 transition-colors rounded-lg hover:bg-red-500/10"
+            className="flex items-center gap-2 w-full px-4 py-2.5 text-sm text-slate-400 hover:text-red-400 transition-colors rounded-lg hover:bg-red-500/10 group"
           >
-            <LogOut className="w-4 h-4" />
+            <LogOut className="w-4 h-4 group-hover:-translate-x-1 transition-transform" />
             Sign Out
           </button>
         </div>
       </aside>
 
-      <main className="flex-1 py-8 px-4 lg:px-10 overflow-auto lg:ml-0 ml-0 pt-16 lg:pt-8">
+      <main className="flex-1 py-8 px-4 lg:px-10 overflow-auto pt-20 lg:pt-8 bg-transparent">
         {children}
       </main>
     </div>
@@ -125,7 +128,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
 
   return (
     <html lang="en" className="dark">
-      <body className={`${inter.variable} font-sans antialiased bg-[#0e0e12] text-gray-100`}>
+      <body className={`${inter.variable} font-sans antialiased text-slate-100`}>
         {isLoginPage ? (
           children
         ) : (

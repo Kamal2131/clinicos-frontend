@@ -1,299 +1,271 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Skeleton } from "@/components/ui/skeleton";
-import { PieChart, Pie, Cell, ResponsiveContainer, LineChart, Line, XAxis, YAxis, Tooltip } from "recharts";
-import { TrendingUp, TrendingDown, Users, Crown, AlertTriangle, Clock } from "lucide-react";
-import { api, Client } from "@/lib/api";
+import { api, SegmentSummary, WorkflowResult } from "@/lib/api";
+import { Users, TrendingUp, Wallet, Brain, Play, RefreshCw, Layers, Zap } from "lucide-react";
+import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, AreaChart, Area } from "recharts";
 
-interface DashboardData {
-    totalClients: number;
-    segments: Record<string, number>;
-    demoMode: boolean;
-    clients: Client[];
-}
-
-const SEGMENT_COLORS: Record<string, string> = {
-    VIP: "#c99545",
-    "At-Risk": "#dc2626",
-    Lapsed: "#ea580c",
-    Regular: "#3b82f6",
-    New: "#22c55e",
-    "New-High-Potential": "#8b5cf6",
-};
-
-// Mock trend data
-const trendData = [
-    { name: "Mon", clients: 8 },
-    { name: "Tue", clients: 9 },
-    { name: "Wed", clients: 8 },
-    { name: "Thu", clients: 10 },
-    { name: "Fri", clients: 10 },
-];
-
-export default function Dashboard() {
-    const [data, setData] = useState<DashboardData | null>(null);
+export default function DashboardPage() {
     const [loading, setLoading] = useState(true);
-    const [error, setError] = useState<string | null>(null);
-    const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
+    const [stats, setStats] = useState<SegmentSummary | null>(null);
+    const [recentWorkflows, setRecentWorkflows] = useState<WorkflowResult[]>([]);
+    const [runningWorkflow, setRunningWorkflow] = useState<string | null>(null);
+
+    // Mock trend data for charts (since the API doesn't return historical trends yet)
+    const chartData = [
+        { name: "Mon", clients: 140, revenue: 2400 },
+        { name: "Tue", clients: 160, revenue: 1398 },
+        { name: "Wed", clients: 200, revenue: 9800 },
+        { name: "Thu", clients: 278, revenue: 3908 },
+        { name: "Fri", clients: 189, revenue: 4800 },
+        { name: "Sat", clients: 239, revenue: 3800 },
+        { name: "Sun", clients: 349, revenue: 4300 },
+    ];
 
     useEffect(() => {
-        const fetchData = async () => {
+        async function fetchData() {
             try {
-                const [info, clients, segments] = await Promise.all([
-                    api.getInfo(),
-                    api.getClients(10),
+                const [segmentData, workflowData] = await Promise.all([
                     api.getSegmentSummary(),
+                    api.getWorkflows() // In a real app, this would be api.getWorkflowHistory
                 ]);
-
-                setData({
-                    totalClients: segments.total_clients,
-                    segments: segments.segment_counts,
-                    demoMode: info.demo_mode,
-                    clients,
-                });
-                setLastUpdated(new Date());
+                setStats(segmentData);
+                setLoading(false);
             } catch (err) {
-                setError("Failed to connect to backend");
-                console.error(err);
-            } finally {
+                console.error("Failed to load dashboard data", err);
                 setLoading(false);
             }
-        };
-
+        }
         fetchData();
     }, []);
 
+    const runWorkflow = async (id: string) => {
+        setRunningWorkflow(id);
+        try {
+            await api.runWorkflow(id);
+            // alert("Workflow started successfully!");
+        } catch (error) {
+            console.error(error);
+        } finally {
+            setTimeout(() => setRunningWorkflow(null), 1000);
+        }
+    };
+
     if (loading) {
         return (
-            <div className="space-y-8">
-                <div className="flex justify-between">
-                    <Skeleton className="h-8 w-48" />
-                    <Skeleton className="h-6 w-24" />
-                </div>
-                <div className="grid grid-cols-12 gap-5">
-                    <Skeleton className="col-span-5 h-40" />
-                    <Skeleton className="col-span-4 h-40" />
-                    <Skeleton className="col-span-3 h-40" />
+            <div className="flex h-[80vh] items-center justify-center">
+                <div className="flex flex-col items-center gap-4">
+                    <div className="w-10 h-10 border-t-2 border-primary rounded-full animate-spin" />
+                    <p className="text-slate-400 animate-pulse text-sm">Synchronizing with ClinicOS...</p>
                 </div>
             </div>
         );
     }
-
-    if (error) {
-        return (
-            <div className="p-6 bg-red-500/10 border border-red-500/50 rounded-lg">
-                <p className="text-red-400">{error}</p>
-                <p className="text-sm text-gray-500 mt-2">API URL: {process.env.NEXT_PUBLIC_API_URL}</p>
-            </div>
-        );
-    }
-
-    const pieData = Object.entries(data?.segments || {}).map(([name, value]) => ({ name, value }));
 
     return (
-        <div className="space-y-8 animate-in fade-in duration-500">
+        <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
+
             {/* Header */}
             <div className="flex items-center justify-between">
                 <div>
-                    <h1 className="text-2xl font-semibold tracking-tight">Dashboard</h1>
-                    <p className="text-sm text-gray-500 mt-1">Multi-location clinic overview</p>
+                    <h1 className="text-3xl font-bold bg-gradient-to-r from-white to-slate-400 bg-clip-text text-transparent">
+                        Dashboard
+                    </h1>
+                    <p className="text-slate-400 mt-1">
+                        Welcome back, here's what's happening today.
+                    </p>
                 </div>
-                <div className="flex items-center gap-3">
-                    {data?.demoMode && (
-                        <Badge className="bg-amber-500/20 text-amber-400 border-amber-500/50">Demo Mode</Badge>
-                    )}
-                    {lastUpdated && (
-                        <span className="text-xs text-gray-500 flex items-center gap-1">
-                            <Clock className="w-3 h-3" />
-                            Updated {lastUpdated.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                        </span>
-                    )}
-                </div>
+                <button
+                    onClick={() => window.location.reload()}
+                    className="p-2 glass-panel rounded-lg hover:bg-white/5 transition-colors text-slate-400 hover:text-white"
+                >
+                    <RefreshCw className="w-5 h-5" />
+                </button>
             </div>
 
-            {/* Stats Grid - Asymmetric */}
-            <div className="grid grid-cols-12 gap-5">
-                {/* Total Clients - Large */}
-                <Card className="col-span-5 bg-[#15151c] border-gray-800 hover:border-gray-700 transition-colors">
-                    <CardContent className="pt-6 pb-8">
-                        <div className="flex items-center gap-2 mb-3">
-                            <Users className="w-4 h-4 text-gray-500" />
-                            <p className="text-xs text-gray-500 uppercase tracking-wide">Total Clients</p>
-                        </div>
-                        <div className="flex items-baseline gap-3">
-                            <span className="text-6xl font-bold tracking-tight">{data?.totalClients || 0}</span>
-                            <span className="flex items-center gap-1 text-emerald-400 text-sm">
-                                <TrendingUp className="w-4 h-4" /> +2 this week
-                            </span>
-                        </div>
-                    </CardContent>
-                </Card>
-
-                {/* VIP - Special */}
-                <Card className="col-span-4 bg-[#15151c] border-amber-500/30 hover:border-amber-500/50 transition-colors shadow-lg shadow-amber-500/5">
-                    <CardContent className="pt-6 pb-6">
-                        <div className="flex items-center gap-2 mb-3">
-                            <Crown className="w-4 h-4 text-amber-400" />
-                            <p className="text-xs text-amber-400 uppercase tracking-wide">VIP Clients</p>
-                        </div>
-                        <div className="text-5xl font-bold tracking-tight">{data?.segments?.VIP || 0}</div>
-                        <p className="text-xs text-gray-500 mt-3">
-                            Top: {data?.clients.find(c => c.segment === 'VIP')?.first_name || 'N/A'}
-                        </p>
-                    </CardContent>
-                </Card>
-
-                {/* At Risk - Smaller */}
-                <Card className="col-span-3 bg-[#15151c] border-gray-800 hover:border-red-500/30 transition-colors">
-                    <CardContent className="pt-5 pb-5">
-                        <div className="flex items-center gap-2 mb-2">
-                            <AlertTriangle className="w-4 h-4 text-red-400" />
-                            <p className="text-xs text-gray-500 uppercase tracking-wide">At Risk</p>
-                        </div>
-                        <div className="text-4xl font-bold">{data?.segments?.["At-Risk"] || 0}</div>
-                        <p className="text-xs text-red-400 mt-2">Needs attention</p>
-                    </CardContent>
-                </Card>
+            {/* Stats Grid */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                <StatsCard
+                    title="Total Clients"
+                    value={stats?.total_clients.toLocaleString() || "0"}
+                    trend="+12% from last month"
+                    icon={Users}
+                    color="blue"
+                />
+                <StatsCard
+                    title="AI Segments"
+                    value={Object.keys(stats?.segment_counts || {}).length.toString()}
+                    trend="Active classification"
+                    icon={Brain}
+                    color="purple"
+                />
+                <StatsCard
+                    title="Revenue (Est)"
+                    value="$42,500"
+                    trend="+8% from last week"
+                    icon={Wallet}
+                    color="emerald"
+                />
+                <StatsCard
+                    title="Active Journeys"
+                    value="12"
+                    trend="4 campaigns running"
+                    icon={Layers}
+                    color="amber"
+                />
             </div>
 
-            {/* Charts Row */}
-            <div className="grid grid-cols-12 gap-5">
-                {/* Segment Pie Chart */}
-                <Card className="col-span-4 bg-[#15151c] border-gray-800">
-                    <CardHeader className="pb-2">
-                        <CardTitle className="text-sm font-medium">Segment Distribution</CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                        <div className="h-48">
-                            <ResponsiveContainer width="100%" height="100%">
-                                <PieChart>
-                                    <Pie
-                                        data={pieData}
-                                        cx="50%"
-                                        cy="50%"
-                                        innerRadius={40}
-                                        outerRadius={70}
-                                        paddingAngle={2}
-                                        dataKey="value"
-                                    >
-                                        {pieData.map((entry, index) => (
-                                            <Cell key={`cell-${index}`} fill={SEGMENT_COLORS[entry.name] || "#6b7280"} />
-                                        ))}
-                                    </Pie>
-                                </PieChart>
-                            </ResponsiveContainer>
-                        </div>
-                        <div className="flex flex-wrap gap-2 mt-2">
-                            {pieData.map((entry) => (
-                                <div key={entry.name} className="flex items-center gap-1.5 text-xs">
-                                    <div className="w-2 h-2 rounded-full" style={{ background: SEGMENT_COLORS[entry.name] }} />
-                                    <span className="text-gray-400">{entry.name}</span>
-                                </div>
-                            ))}
-                        </div>
-                    </CardContent>
-                </Card>
+            {/* Main Content Split */}
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
 
-                {/* Trend Chart */}
-                <Card className="col-span-5 bg-[#15151c] border-gray-800">
-                    <CardHeader className="pb-2">
-                        <CardTitle className="text-sm font-medium">Client Trend (This Week)</CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                        <div className="h-48">
-                            <ResponsiveContainer width="100%" height="100%">
-                                <LineChart data={trendData}>
-                                    <XAxis dataKey="name" stroke="#6b7280" fontSize={12} tickLine={false} axisLine={false} />
-                                    <YAxis stroke="#6b7280" fontSize={12} tickLine={false} axisLine={false} />
-                                    <Tooltip
-                                        contentStyle={{ background: '#1c1c26', border: '1px solid #374151', borderRadius: '8px' }}
-                                        labelStyle={{ color: '#9ca3af' }}
-                                    />
-                                    <Line type="monotone" dataKey="clients" stroke="#8b5cf6" strokeWidth={2} dot={false} />
-                                </LineChart>
-                            </ResponsiveContainer>
-                        </div>
-                    </CardContent>
-                </Card>
-
-                {/* Quick Stats */}
-                <div className="col-span-3 space-y-4">
-                    <Card className="bg-[#15151c] border-gray-800">
-                        <CardContent className="py-4">
-                            <p className="text-xs text-gray-500 uppercase tracking-wide">New This Month</p>
-                            <div className="flex items-baseline gap-2 mt-1">
-                                <span className="text-2xl font-bold">{data?.segments?.New || 0}</span>
-                                <span className="text-xs text-emerald-400">+18%</span>
-                            </div>
-                        </CardContent>
-                    </Card>
-                    <Card className="bg-[#15151c] border-gray-800">
-                        <CardContent className="py-4">
-                            <p className="text-xs text-gray-500 uppercase tracking-wide">Lapsed (120+ days)</p>
-                            <div className="flex items-baseline gap-2 mt-1">
-                                <span className="text-2xl font-bold">{data?.segments?.Lapsed || 0}</span>
-                                <span className="text-xs text-orange-400">Win back</span>
-                            </div>
-                        </CardContent>
-                    </Card>
-                    <Card className="bg-[#15151c] border-gray-800">
-                        <CardContent className="py-4">
-                            <p className="text-xs text-gray-500 uppercase tracking-wide">Regular</p>
-                            <div className="flex items-baseline gap-2 mt-1">
-                                <span className="text-2xl font-bold">{data?.segments?.Regular || 0}</span>
-                                <span className="text-xs text-gray-500">Stable</span>
-                            </div>
-                        </CardContent>
-                    </Card>
+                {/* Main Chart Section */}
+                <div className="lg:col-span-2 glass-card p-6 h-[400px]">
+                    <h2 className="text-lg font-semibold mb-6 flex items-center gap-2">
+                        <TrendingUp className="w-5 h-5 text-blue-400" />
+                        Client Growth
+                    </h2>
+                    <ResponsiveContainer width="100%" height="85%">
+                        <AreaChart data={chartData}>
+                            <defs>
+                                <linearGradient id="colorClients" x1="0" y1="0" x2="0" y2="1">
+                                    <stop offset="5%" stopColor="#38bdf8" stopOpacity={0.3} />
+                                    <stop offset="95%" stopColor="#38bdf8" stopOpacity={0} />
+                                </linearGradient>
+                            </defs>
+                            <XAxis
+                                dataKey="name"
+                                stroke="#64748b"
+                                fontSize={12}
+                                tickLine={false}
+                                axisLine={false}
+                            />
+                            <YAxis
+                                stroke="#64748b"
+                                fontSize={12}
+                                tickLine={false}
+                                axisLine={false}
+                                tickFormatter={(value) => `${value}`}
+                            />
+                            <Tooltip
+                                contentStyle={{
+                                    backgroundColor: '#1e293b',
+                                    border: '1px solid #334155',
+                                    borderRadius: '8px'
+                                }}
+                            />
+                            <Area
+                                type="monotone"
+                                dataKey="clients"
+                                stroke="#38bdf8"
+                                strokeWidth={2}
+                                fillOpacity={1}
+                                fill="url(#colorClients)"
+                            />
+                        </AreaChart>
+                    </ResponsiveContainer>
                 </div>
+
+                {/* Quick Actions / Workflows */}
+                <div className="glass-card p-6">
+                    <h2 className="text-lg font-semibold mb-6 flex items-center gap-2">
+                        <Zap className="w-5 h-5 text-amber-400" />
+                        Quick Actions
+                    </h2>
+                    <div className="space-y-4">
+                        <WorkflowButton
+                            id="client_sync"
+                            label="Sync Mindbody Clients"
+                            description="Fetch new clients & classify with AI"
+                            isRunning={runningWorkflow === "client_sync"}
+                            onClick={() => runWorkflow("client_sync")}
+                        />
+                        <WorkflowButton
+                            id="reengagement"
+                            label="Run Re-engagement"
+                            description="Target 'At Risk' clients with offers"
+                            isRunning={runningWorkflow === "reengagement"}
+                            onClick={() => runWorkflow("reengagement")}
+                        />
+                        <WorkflowButton
+                            id="birthday"
+                            label="Process Birthdays"
+                            description="Send birthday offers for this month"
+                            isRunning={runningWorkflow === "birthday"}
+                            onClick={() => runWorkflow("birthday")}
+                        />
+                    </div>
+                </div>
+
             </div>
 
-            {/* Recent Clients */}
-            <Card className="bg-[#15151c] border-gray-800">
-                <CardHeader className="flex flex-row items-center justify-between">
-                    <CardTitle className="text-sm font-medium">Recent Clients</CardTitle>
-                    <span className="text-xs text-gray-500">Last 5</span>
-                </CardHeader>
-                <CardContent className="space-y-1">
-                    {data?.clients.slice(0, 5).map((client, i) => (
-                        <div
-                            key={client.id}
-                            className={`flex items-center justify-between py-3 px-3 rounded-lg transition-colors hover:bg-[#1c1c26] cursor-pointer
-                ${i === 0 ? 'bg-[#1c1c26]/50' : ''}
-              `}
-                        >
-                            <div className="flex items-center gap-3">
-                                <div className={`w-9 h-9 rounded-lg flex items-center justify-center text-xs font-medium
-                  ${client.segment === 'VIP' ? 'bg-amber-500/20 text-amber-400' : 'bg-[#1c1c26] text-gray-300'}
-                `}>
-                                    {client.first_name[0]}{client.last_name[0]}
-                                </div>
-                                <div>
-                                    <p className="text-sm font-medium flex items-center gap-1.5">
-                                        {client.first_name} {client.last_name}
-                                        {client.segment === 'VIP' && <Crown className="w-3 h-3 text-amber-400" />}
-                                    </p>
-                                    <p className="text-xs text-gray-500">{client.email}</p>
-                                </div>
-                            </div>
-                            <div className="flex items-center gap-4">
-                                <span className="text-sm text-gray-400">${client.lifetime_spend.toLocaleString()}</span>
-                                {client.segment && (
-                                    <Badge
-                                        className="text-[10px] text-white border-0"
-                                        style={{ background: SEGMENT_COLORS[client.segment] }}
-                                    >
-                                        {client.segment}
-                                    </Badge>
-                                )}
-                            </div>
+            {/* Segments Display */}
+            <div className="glass-card p-6">
+                <h2 className="text-lg font-semibold mb-4">Live Client Segments</h2>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                    {stats && Object.entries(stats.segment_counts).map(([segment, count]) => (
+                        <div key={segment} className="bg-white/5 border border-white/5 rounded-lg p-4 flex items-center justify-between">
+                            <span className="font-medium text-slate-300 capitalize">{segment.replace('_', ' ')}</span>
+                            <span className="bg-white/10 px-2 py-0.5 rounded text-sm font-bold">{count}</span>
                         </div>
                     ))}
-                </CardContent>
-            </Card>
+                </div>
+            </div>
         </div>
+    );
+}
+
+// Components
+
+function StatsCard({ title, value, trend, icon: Icon, color }: any) {
+    const colorClasses: any = {
+        blue: "text-blue-400 bg-blue-500/10",
+        purple: "text-purple-400 bg-purple-500/10",
+        emerald: "text-emerald-400 bg-emerald-500/10",
+        amber: "text-amber-400 bg-amber-500/10",
+    };
+
+    return (
+        <div className="glass-card p-6 relative overflow-hidden group">
+            <div className={`absolute top-0 right-0 p-4 opacity-50 transition-transform group-hover:scale-110 ${colorClasses[color].split(" ")[0]}`}>
+                <Icon className="w-8 h-8 opacity-20" />
+            </div>
+            <div>
+                <p className="text-sm font-medium text-slate-400">{title}</p>
+                <p className="text-2xl font-bold mt-2 text-white">{value}</p>
+                <div className="flex items-center gap-1.5 mt-2">
+                    <div className={`p-0.5 rounded-full ${colorClasses[color]}`}>
+                        <TrendingUp className="w-3 h-3" />
+                    </div>
+                    <span className="text-[10px] text-slate-400">{trend}</span>
+                </div>
+            </div>
+            {/* Glow effect */}
+            <div className={`absolute -bottom-4 -right-4 w-24 h-24 rounded-full blur-3xl opacity-20 pointer-events-none ${colorClasses[color].split(" ")[1].replace("/10", "/30")}`} />
+        </div>
+    );
+}
+
+function WorkflowButton({ label, description, isRunning, onClick }: any) {
+    return (
+        <button
+            onClick={onClick}
+            disabled={isRunning}
+            className={`
+        w-full text-left p-3 rounded-xl border transition-all duration-200 group relative overflow-hidden
+        ${isRunning
+                    ? 'bg-blue-600/20 border-blue-500'
+                    : 'bg-white/5 border-white/5 hover:bg-white/10 hover:border-white/10'}
+      `}
+        >
+            <div className="flex items-start justify-between relative z-10">
+                <div>
+                    <p className="font-medium text-sm text-slate-200 group-hover:text-white transition-colors">{label}</p>
+                    <p className="text-[10px] text-slate-500 mt-0.5">{description}</p>
+                </div>
+                <div className={`p-1.5 rounded-lg transition-colors ${isRunning ? 'bg-blue-500 text-white animate-pulse' : 'bg-white/5 text-slate-400 group-hover:bg-blue-500 group-hover:text-white'}`}>
+                    {isRunning ? <RefreshCw className="w-4 h-4 animate-spin" /> : <Play className="w-4 h-4" />}
+                </div>
+            </div>
+        </button>
     );
 }
