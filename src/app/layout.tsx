@@ -110,6 +110,14 @@ function DashboardLayout({ children }: { children: React.ReactNode }) {
   );
 }
 
+export const metadata = {
+  title: "ClinicOS | Intelligence Layer",
+  description: "AI-powered management for aesthetics clinics.",
+  icons: {
+    icon: "/logo.svg",
+  },
+};
+
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const isLoginPage = pathname === "/login";
