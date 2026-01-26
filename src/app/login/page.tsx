@@ -103,8 +103,7 @@ export default function LoginPage() {
                         </Button>
 
                         <div className="text-center pt-4 border-t border-gray-800">
-                            <p className="text-xs text-gray-500">Demo Credentials</p>
-                            <p className="text-xs text-gray-400 mt-1">admin@clinicos.com / admin123</p>
+                            <a href="#" className="text-xs text-purple-400 hover:text-purple-300 transition-colors">Forgot your password?</a>
                         </div>
                     </form>
                 </CardContent>
