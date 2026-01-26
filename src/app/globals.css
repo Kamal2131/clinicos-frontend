@@ -8,12 +8,12 @@
 :root {
   --background: #0f172a;
   --foreground: #f8fafc;
-  
+
   /* Glassmorphism Variables */
   --glass-bg: rgba(30, 41, 59, 0.4);
   --glass-border: rgba(255, 255, 255, 0.08);
   --glass-blur: 12px;
-  
+
   /* Brand Colors */
   --primary: #38bdf8;
   --primary-glow: rgba(56, 189, 248, 0.5);
@@ -27,6 +27,10 @@ body {
   color: var(--foreground);
   font-family: var(--font-sans), system-ui, sans-serif;
   min-height: 100vh;
+}
+
+html {
+  scroll-behavior: smooth;
 }
 
 /* Glassmorphism Utilities */
@@ -57,9 +61,17 @@ body {
 
 /* Animations */
 @keyframes float {
-  0% { transform: translateY(0px); }
-  50% { transform: translateY(-5px); }
-  100% { transform: translateY(0px); }
+  0% {
+    transform: translateY(0px);
+  }
+
+  50% {
+    transform: translateY(-5px);
+  }
+
+  100% {
+    transform: translateY(0px);
+  }
 }
 
 .animate-float {
@@ -70,13 +82,16 @@ body {
 ::-webkit-scrollbar {
   width: 8px;
 }
+
 ::-webkit-scrollbar-track {
   background: transparent;
 }
+
 ::-webkit-scrollbar-thumb {
   background: rgba(255, 255, 255, 0.1);
   border-radius: 4px;
 }
+
 ::-webkit-scrollbar-thumb:hover {
   background: rgba(255, 255, 255, 0.2);
 }
