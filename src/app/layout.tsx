@@ -11,7 +11,7 @@ import "./globals.css";
 const inter = Inter({ subsets: ["latin"], variable: "--font-inter" });
 
 const navItems = [
-  { href: "/", label: "Dashboard", icon: LayoutDashboard },
+  { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
   { href: "/clients", label: "Clients", icon: Users },
   { href: "/workflows", label: "Workflows", icon: Zap },
   { href: "/copy-generator", label: "AI Copy", icon: Sparkles },
@@ -110,7 +110,7 @@ function DashboardLayout({ children }: { children: React.ReactNode }) {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const isLoginPage = pathname === "/login";
-  const isLandingPage = pathname?.startsWith("/landing");
+  const isLandingPage = pathname === "/";
 
   // Landing pages get their own clean layout (no auth, no sidebar)
   if (isLandingPage) {

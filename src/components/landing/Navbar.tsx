@@ -26,14 +26,14 @@ export function Navbar() {
     return (
         <nav
             className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${isScrolled
-                    ? "bg-white/95 backdrop-blur-md shadow-sm"
-                    : "bg-transparent"
+                ? "bg-white/95 backdrop-blur-md shadow-sm"
+                : "bg-transparent"
                 }`}
         >
             <div className="max-w-7xl mx-auto px-6 py-4">
                 <div className="flex items-center justify-between">
                     {/* Logo */}
-                    <Link href="/landing" className="flex items-center gap-2">
+                    <Link href="/" className="flex items-center gap-2">
                         <span className="text-2xl font-bold text-gray-900">
                             Clinic<span className="text-purple-600">OS</span>
                         </span>
@@ -55,7 +55,7 @@ export function Navbar() {
                     {/* CTA Buttons */}
                     <div className="hidden md:flex items-center gap-4">
                         <Link
-                            href="/"
+                            href="/login"
                             className="text-gray-600 hover:text-purple-600 transition-colors text-sm font-medium"
                         >
                             Login
@@ -95,7 +95,7 @@ export function Navbar() {
                             </a>
                         ))}
                         <div className="flex flex-col gap-3 mt-4">
-                            <Link href="/" className="text-gray-600 py-2">
+                            <Link href="/login" className="text-gray-600 py-2">
                                 Login
                             </Link>
                             <Link
