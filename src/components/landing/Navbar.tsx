@@ -2,7 +2,8 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import { Menu, X, ArrowRight } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { Menu, X, ArrowRight, LogOut } from "lucide-react";
 
 const navLinks = [
     { href: "#features", label: "Features" },
@@ -12,6 +13,8 @@ const navLinks = [
 export function Navbar() {
     const [isScrolled, setIsScrolled] = useState(false);
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+    const [isLoggedIn, setIsLoggedIn] = useState(false);
+    const router = useRouter();
 
     useEffect(() => {
         const handleScroll = () => {
@@ -20,6 +23,17 @@ export function Navbar() {
         window.addEventListener("scroll", handleScroll);
         return () => window.removeEventListener("scroll", handleScroll);
     }, []);
+
+    useEffect(() => {
+        setIsLoggedIn(!!localStorage.getItem("clinicos_token"));
+    }, []);
+
+    const handleLogout = () => {
+        localStorage.removeItem("clinicos_token");
+        localStorage.removeItem("clinicos_user");
+        setIsLoggedIn(false);
+        router.push("/");
+    };
 
     return (
         <nav
@@ -53,19 +67,40 @@ export function Navbar() {
 
                     {/* CTA Buttons */}
                     <div className="hidden md:flex items-center gap-4">
-                        <Link
-                            href="/login"
-                            className="text-slate-300 hover:text-white transition-colors text-sm font-medium"
-                        >
-                            Sign In
-                        </Link>
-                        <Link
-                            href="/dashboard"
-                            className="bg-white text-black px-5 py-2.5 rounded-full text-sm font-semibold hover:bg-slate-200 transition-all duration-300 flex items-center gap-2 group"
-                        >
-                            Launch Console
-                            <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
-                        </Link>
+                        {isLoggedIn ? (
+                            <>
+                                <Link
+                                    href="/dashboard"
+                                    className="bg-white text-black px-5 py-2.5 rounded-full text-sm font-semibold hover:bg-slate-200 transition-all duration-300 flex items-center gap-2 group"
+                                >
+                                    Dashboard
+                                    <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+                                </Link>
+                                <button
+                                    onClick={handleLogout}
+                                    className="text-slate-300 hover:text-red-400 transition-colors text-sm font-medium flex items-center gap-2"
+                                >
+                                    <LogOut className="w-4 h-4" />
+                                    Logout
+                                </button>
+                            </>
+                        ) : (
+                            <>
+                                <Link
+                                    href="/login"
+                                    className="text-slate-300 hover:text-white transition-colors text-sm font-medium"
+                                >
+                                    Sign In
+                                </Link>
+                                <Link
+                                    href="/dashboard"
+                                    className="bg-white text-black px-5 py-2.5 rounded-full text-sm font-semibold hover:bg-slate-200 transition-all duration-300 flex items-center gap-2 group"
+                                >
+                                    Launch Console
+                                    <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+                                </Link>
+                            </>
+                        )}
                     </div>
 
                     {/* Mobile Menu Button */}
@@ -95,15 +130,32 @@ export function Navbar() {
                             </a>
                         ))}
                         <div className="flex flex-col gap-3 mt-4">
-                            <Link href="/login" className="text-slate-300 py-2">
-                                Sign In
-                            </Link>
-                            <Link
-                                href="/dashboard"
-                                className="bg-white text-black px-5 py-3 rounded-full text-center font-semibold"
-                            >
-                                Launch Console
-                            </Link>
+                            {isLoggedIn ? (
+                                <>
+                                    <Link href="/dashboard" className="bg-white text-black px-5 py-3 rounded-full text-center font-semibold">
+                                        Dashboard
+                                    </Link>
+                                    <button
+                                        onClick={handleLogout}
+                                        className="text-slate-300 hover:text-red-400 py-2 flex items-center gap-2"
+                                    >
+                                        <LogOut className="w-4 h-4" />
+                                        Logout
+                                    </button>
+                                </>
+                            ) : (
+                                <>
+                                    <Link href="/login" className="text-slate-300 py-2">
+                                        Sign In
+                                    </Link>
+                                    <Link
+                                        href="/dashboard"
+                                        className="bg-white text-black px-5 py-3 rounded-full text-center font-semibold"
+                                    >
+                                        Launch Console
+                                    </Link>
+                                </>
+                            )}
                         </div>
                     </div>
                 )}
